@@ -6,12 +6,22 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "data": "bash scripts/download-raw.sh && node scripts/fetch-geometry.mjs && node scripts/fetch-census.mjs && node scripts/fetch-dcfs.mjs && node scripts/fetch-supply.mjs && node scripts/build.mjs",
+    "data:geometry": "node scripts/fetch-geometry.mjs",
+    "data:census": "node scripts/fetch-census.mjs",
+    "data:supply": "node scripts/fetch-supply.mjs",
+    "data:build": "node scripts/build.mjs",
+    "data:dcfs": "node scripts/fetch-dcfs.mjs",
+    "predev": "node scripts/copy-worker.mjs",
+    "prebuild": "node scripts/copy-worker.mjs"
   },
   "dependencies": {
+    "maplibre-gl": "^6.6.0",
     "next": "16.3.3",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "shapefile": "^0.6.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

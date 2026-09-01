@@ -1,0 +1,86 @@
+{
+  "generatedAt": "2026-08-31T17:13:04.655Z",
+  "acsYear": 2024,
+  "counties": [
+    "McHenry",
+    "Will",
+    "Cook",
+    "DuPage",
+    "Kane",
+    "Kendall",
+    "Lake"
+  ],
+  "radii": {
+    "primary": 1,
+    "secondary": 3
+  },
+  "homeBase": {
+    "zip": "60502",
+    "label": "Aurora (60502)",
+    "lonLat": [
+      -88.2565,
+      41.7833
+    ]
+  },
+  "blockGroups": 3913,
+  "facilities": 6761,
+  "factors": [
+    {
+      "key": "careNeed",
+      "label": "Working-parent demand",
+      "help": "Children under 6 within 1 mile whose available parents are all in the labor force — the households that structurally need full-day care."
+    },
+    {
+      "key": "kidDensity",
+      "label": "Young-child density",
+      "help": "Children aged 0–4 within 1 mile. Raw size of the infant-through-preschool market."
+    },
+    {
+      "key": "supplyGap",
+      "label": "Supply gap (1 mi)",
+      "help": "Children needing care per existing childcare slot within 1 mile. High means underserved."
+    },
+    {
+      "key": "supplyGap3",
+      "label": "Supply gap (3 mi)",
+      "help": "Same ratio measured at 3 miles. Catches areas that look empty at 1 mile only because they sit beside a saturated neighbor."
+    },
+    {
+      "key": "growth",
+      "label": "New construction",
+      "help": "Share of housing built since 2010, blended with population change since the 2020 census. This is the new-subdivision signal."
+    },
+    {
+      "key": "income",
+      "label": "Income fit",
+      "help": "How well median household income matches mid-market Montessori tuition. Peaks around $115k–$165k."
+    },
+    {
+      "key": "education",
+      "label": "Parent education",
+      "help": "Share of adults 25+ with a bachelor's degree or higher — the strongest correlate of demand for Montessori specifically."
+    },
+    {
+      "key": "families",
+      "label": "Family households",
+      "help": "Share of households that are families with children under 18, plus owner-occupancy (a proxy for settled, long-tenure families)."
+    }
+  ],
+  "defaultWeights": {
+    "careNeed": 0.22,
+    "kidDensity": 0.15,
+    "supplyGap": 0.2,
+    "supplyGap3": 0.07,
+    "growth": 0.14,
+    "income": 0.12,
+    "education": 0.05,
+    "families": 0.05
+  },
+  "competitorWeight": {
+    "montessori": 1,
+    "center": 1,
+    "group_home": 0.8,
+    "home": 0.55,
+    "school": 0
+  }
+}

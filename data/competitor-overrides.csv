@@ -1,0 +1,5 @@
+# Hand corrections to the OSM competitor list. Applied by scripts/build.mjs.
+# action: add | remove
+#   add    -> name,kind,lat,lon,capacity  (kind: montessori|daycare|preschool|school)
+#   remove -> match on name (case-insensitive substring) and, if given, within 0.5mi of lat/lon
+action,name,kind,lat,lon,capacity

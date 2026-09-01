@@ -1,26 +1,97 @@
+/* MapLibre's stylesheet is unlayered, and unlayered CSS beats anything in a
+   cascade layer — including every Tailwind utility. Importing it into a low
+   `vendor` layer (declared before Tailwind's) lets utility classes win, which
+   matters because `.maplibregl-map` sets `position: relative` and would
+   otherwise silently override `.absolute` on the map container. */
+@import "maplibre-gl/dist/maplibre-gl.css" layer(vendor);
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Palette. Sequential blue ramp (100 -> 700) carries the site score; a single
+   orange marks competing childcare and a neutral gray marks K-12 schools, so
+   the competitor overlay never collides with the score ramp underneath it.
+   --------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --surface-0: #ffffff;
+  --surface-1: #fcfcfb;
+  --surface-2: #f4f4f1;
+  --border: #e2e2dd;
+
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #86857f;
+
+  /* Sequential blue — score magnitude */
+  --seq-100: #cde2fb;
+  --seq-200: #9ec5f4;
+  --seq-300: #6da7ec;
+  --seq-400: #3987e5;
+  --seq-500: #256abf;
+  --seq-600: #184f95;
+  --seq-700: #0d366b;
+
+  --accent: #2a78d6;
+  --competitor: #eb6834;
+  --montessori: #c2410c;
+  --school: #8a8a85;
+  --home: #4a3aa7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --surface-2: #242423;
+    --border: #35352f;
+
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8e8d84;
+
+    --seq-100: #0d366b;
+    --seq-200: #184f95;
+    --seq-300: #256abf;
+    --seq-400: #2a78d6;
+    --seq-500: #3987e5;
+    --seq-600: #6da7ec;
+    --seq-700: #b7d3f6;
+
+    --accent: #3987e5;
+    --competitor: #d95926;
+    --montessori: #f97316;
+    --school: #6f6f6a;
+    --home: #9085e9;
+  }
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--surface-0);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Keep MapLibre's chrome from fighting the app's own surfaces. */
+.maplibregl-popup-content {
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  font-size: 12px;
 }
+.maplibregl-popup-tip { display: none; }
+.maplibregl-ctrl-group { background: var(--surface-1) !important; }
+
+input[type="range"] { accent-color: var(--accent); }
