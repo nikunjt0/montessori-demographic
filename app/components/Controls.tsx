@@ -128,7 +128,7 @@ export default function Controls({
             className="w-full"
           />
           <p className="mt-0.5 text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
-            Hides thin markets that score well only because nobody competes there.
+            Thin markets that score well only because nobody competes there are hatched out on the map.
           </p>
         </div>
 

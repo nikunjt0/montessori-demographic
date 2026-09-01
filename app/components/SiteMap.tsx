@@ -172,6 +172,35 @@ export default function SiteMap() {
       ];
 
       if (!map.getLayer("bg-fill")) {
+        // Block groups excluded by the active filters render as a diagonal
+        // hatch instead of disappearing: a bare-basemap hole is
+        // indistinguishable from missing data, and every block group here has
+        // data. setStyle clears custom images, so re-create on each style load.
+        if (!map.hasImage("hatch-excluded")) {
+          const size = 8;
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = size;
+          const ctx = canvas.getContext("2d")!;
+          ctx.strokeStyle = dark ? "#77776e" : "#b0b0a8";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          // Main anti-diagonal plus both cut corners, so the tile is seamless.
+          ctx.moveTo(0, size); ctx.lineTo(size, 0);
+          ctx.moveTo(-1, 1); ctx.lineTo(1, -1);
+          ctx.moveTo(size - 1, size + 1); ctx.lineTo(size + 1, size - 1);
+          ctx.stroke();
+          map.addImage("hatch-excluded", ctx.getImageData(0, 0, size, size), { pixelRatio: 2 });
+        }
+        map.addLayer({
+          id: "bg-excluded",
+          type: "fill",
+          source: SRC_BG,
+          filter: ["==", ["get", "geoid"], ""], // populated by the filter effect
+          paint: {
+            "fill-pattern": "hatch-excluded",
+            "fill-opacity": 0.7,
+          },
+        });
         map.addLayer({
           id: "bg-fill",
           type: "fill",
@@ -414,9 +443,13 @@ export default function SiteMap() {
         .addTo(map);
     };
 
-    map.on("mousemove", "bg-fill", onBgMove);
-    map.on("mouseleave", "bg-fill", onBgLeave);
-    map.on("click", "bg-fill", onBgClick);
+    // Grayed-out (filtered) block groups stay inspectable — they have data too.
+    const bgLayers = ["bg-fill", "bg-excluded"];
+    for (const layer of bgLayers) {
+      map.on("mousemove", layer, onBgMove);
+      map.on("mouseleave", layer, onBgLeave);
+      map.on("click", layer, onBgClick);
+    }
     for (const layer of facilityLayers) {
       map.on("mouseenter", layer, onFacilityEnter);
       map.on("mouseleave", layer, onFacilityLeave);
@@ -424,9 +457,11 @@ export default function SiteMap() {
     }
 
     return () => {
-      map.off("mousemove", "bg-fill", onBgMove);
-      map.off("mouseleave", "bg-fill", onBgLeave);
-      map.off("click", "bg-fill", onBgClick);
+      for (const layer of bgLayers) {
+        map.off("mousemove", layer, onBgMove);
+        map.off("mouseleave", layer, onBgLeave);
+        map.off("click", layer, onBgClick);
+      }
       for (const layer of facilityLayers) {
         map.off("mouseenter", layer, onFacilityEnter);
         map.off("mouseleave", layer, onFacilityLeave);
@@ -461,14 +496,19 @@ export default function SiteMap() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styleReady || !filters.counties.size) return;
-    const expr: FilterSpecification = [
+    const inCounties: FilterSpecification = ["in", ["get", "county"], ["literal", [...filters.counties]]];
+    const passes: FilterSpecification = [
       "all",
-      ["in", ["get", "county"], ["literal", [...filters.counties]]],
       [">=", ["get", "kids0to4_1mi"], filters.minKids],
       ["<=", ["get", "homeMiles"], filters.maxHomeMiles >= 60 ? 9999 : filters.maxHomeMiles],
     ];
     for (const id of ["bg-fill", "bg-line"]) {
-      if (map.getLayer(id)) map.setFilter(id, expr);
+      if (map.getLayer(id)) map.setFilter(id, ["all", inCounties, passes]);
+    }
+    // Gray, not gone: block groups in an enabled county that fail the sliders.
+    // Counties toggled off vanish entirely — that exclusion is deliberate.
+    if (map.getLayer("bg-excluded")) {
+      map.setFilter("bg-excluded", ["all", inCounties, ["!", passes]]);
     }
     if (map.getLayer("centers")) {
       const centersVis = filters.showCenters ? "visible" : "none";

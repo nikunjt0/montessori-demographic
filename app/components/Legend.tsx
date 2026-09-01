@@ -27,6 +27,13 @@ export default function Legend({ meta, showSchools, showHomes }: { meta: Meta; s
         <span>0 — weaker</span>
         <span>100 — stronger</span>
       </div>
+      <div className="mt-1.5 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+        <span
+          className="inline-block h-3 w-3 shrink-0 rounded-sm"
+          style={{ background: "repeating-linear-gradient(45deg, transparent 0 2px, var(--excluded) 2px 3.5px)" }}
+        />
+        outside current filters (still has data)
+      </div>
 
       <div className="mt-3 mb-1.5 font-semibold">Existing providers</div>
       <ul className="space-y-1" style={{ color: "var(--text-secondary)" }}>
