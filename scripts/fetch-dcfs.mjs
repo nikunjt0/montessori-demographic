@@ -235,6 +235,49 @@ for (let start = 0; start < providers.length; start += CHUNK) {
   await sleep(500);
 }
 
+// ---------------------------------------------------------------------------
+// 3b. Second pass: Nominatim for addresses Census TIGER can't match
+// ---------------------------------------------------------------------------
+// TIGER lacks address ranges for some newer roads (e.g. N Aurora Rd in 60502),
+// so ~150 providers come back No_Match/Tie. Resolve those against OSM, one
+// request per second per the Nominatim usage policy, cached across runs.
+const NOMINATIM_CACHE = join(GEO_CACHE, "nominatim.json");
+const nomCache = existsSync(NOMINATIM_CACHE)
+  ? JSON.parse(readFileSync(NOMINATIM_CACHE, "utf8"))
+  : {};
+
+const misses = providers.filter((p) => !coords.get(p.id));
+let nomHits = 0;
+for (const p of misses) {
+  if (!(p.id in nomCache)) {
+    const params = new URLSearchParams({
+      street: p.street,
+      city: p.city,
+      state: "IL",
+      postalcode: p.zip,
+      country: "us",
+      format: "jsonv2",
+      limit: "1",
+    });
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+        headers: { "User-Agent": "montessori-demographic-study (personal research)" },
+      });
+      const hits = res.ok ? await res.json() : [];
+      nomCache[p.id] = hits[0] ? [+(+hits[0].lon).toFixed(5), +(+hits[0].lat).toFixed(5)] : null;
+    } catch {
+      nomCache[p.id] = null;
+    }
+    writeFileSync(NOMINATIM_CACHE, JSON.stringify(nomCache));
+    await sleep(1100);
+  }
+  if (nomCache[p.id]) {
+    coords.set(p.id, nomCache[p.id]);
+    nomHits++;
+  }
+}
+if (misses.length) console.log(`Nominatim second pass: ${nomHits}/${misses.length} resolved.`);
+
 // Fall back to the mean of successfully geocoded providers in the same ZIP.
 const byZip = new Map();
 for (const p of providers) {

@@ -97,6 +97,9 @@ export default function SiteMap() {
   const [weights, setWeights] = useState<Weights>(PRESETS.balanced.weights);
   const [activePreset, setActivePreset] = useState<string | null>("balanced");
   const [selected, setSelected] = useState<BlockGroupProps | null>(null);
+  // Which sheet is open on phones. Ignored at md+ where both panels are static
+  // sidebars, so map clicks can set it unconditionally.
+  const [mobilePanel, setMobilePanel] = useState<"controls" | "list" | null>(null);
   const [filters, setFilters] = useState<Filters>({
     counties: new Set<string>(),
     minKids: 150,
@@ -375,9 +378,16 @@ export default function SiteMap() {
     };
     const onBgLeave = () => { setCursor(""); popup.remove(); };
     const onBgClick = (e: MapLayerMouseEvent) => {
+      // A tap on a facility marker also lands on the fill underneath; let the
+      // facility popup win instead of yanking the details sheet open.
+      const present = facilityLayers.filter((l) => map.getLayer(l));
+      if (present.length && map.queryRenderedFeatures(e.point, { layers: present }).length) return;
       const geoid = String(e.features?.[0]?.properties?.geoid ?? "");
       const full = scoreIndex.get(geoid);
-      if (full) setSelected(full);
+      if (full) {
+        setSelected(full);
+        setMobilePanel("list");
+      }
     };
     const onFacilityEnter = () => setCursor("pointer");
     const onFacilityLeave = () => setCursor("");
@@ -524,6 +534,7 @@ export default function SiteMap() {
 
   const flyTo = (p: BlockGroupProps) => {
     setSelected(p);
+    setMobilePanel(null); // on phones, drop the sheet so the map is visible
     const map = mapRef.current;
     if (!map || !p.bbox) return;
     const [minX, minY, maxX, maxY] = p.bbox;
@@ -546,14 +557,35 @@ export default function SiteMap() {
     );
   }
 
+  // Below md both panels render as bottom sheets slid offscreen until toggled;
+  // at md+ the same nodes become the static sidebars of the desktop layout.
+  const sheetClass = (open: boolean) =>
+    "fixed inset-x-0 bottom-0 z-30 max-h-[75dvh] overflow-y-auto rounded-t-2xl border-t p-4 " +
+    "pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl transition-transform duration-200 " +
+    (open ? "translate-y-0 " : "translate-y-full ") +
+    "md:static md:z-auto md:max-h-none md:translate-y-0 md:rounded-none md:border-t-0 md:shrink-0 md:shadow-none md:transition-none";
+
+  const doneButton = (
+    <button
+      onClick={() => setMobilePanel(null)}
+      className="rounded-full border px-3 py-1 text-[11px] font-medium md:hidden"
+      style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+    >
+      Done
+    </button>
+  );
+
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* Controls ---------------------------------------------------------- */}
       <aside
-        className="w-[320px] shrink-0 overflow-y-auto border-r p-4"
+        className={`${sheetClass(mobilePanel === "controls")} md:w-[320px] md:border-r`}
         style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}
       >
-        <h1 className="text-sm font-semibold">Montessori site finder</h1>
+        <div className="flex items-start justify-between gap-2">
+          <h1 className="text-sm font-semibold">Montessori site finder</h1>
+          {doneButton}
+        </div>
         <p className="mt-0.5 mb-4 text-[11px] leading-snug" style={{ color: "var(--text-muted)" }}>
           {meta.blockGroups.toLocaleString()} block groups · {meta.facilities.toLocaleString()} licensed providers ·
           ACS {meta.acsYear} 5-year
@@ -586,23 +618,29 @@ export default function SiteMap() {
 
       {/* Shortlist / detail ------------------------------------------------- */}
       <aside
-        className="w-[330px] shrink-0 overflow-y-auto border-l p-4"
+        className={`${sheetClass(mobilePanel === "list")} md:w-[330px] md:border-l`}
         style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}
       >
         {selected ? (
           <>
-            <button
-              onClick={() => setSelected(null)}
-              className="mb-3 text-[11px] underline"
-              style={{ color: "var(--text-muted)" }}
-            >
-              ← Back to shortlist
-            </button>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <button
+                onClick={() => setSelected(null)}
+                className="text-[11px] underline"
+                style={{ color: "var(--text-muted)" }}
+              >
+                ← Back to shortlist
+              </button>
+              {doneButton}
+            </div>
             <Details props={selected} liveScore={scoreOf(selected)} meta={meta} />
           </>
         ) : (
           <>
-            <h3 className="text-sm font-semibold">Top locations</h3>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="text-sm font-semibold">Top locations</h3>
+              {doneButton}
+            </div>
             <p className="mt-0.5 mb-3 text-[11px] leading-snug" style={{ color: "var(--text-muted)" }}>
               Highest-scoring block groups under the current weights and filters. Click one to zoom.
             </p>
@@ -637,6 +675,36 @@ export default function SiteMap() {
           </>
         )}
       </aside>
+
+      {/* Mobile chrome: backdrop behind the open sheet + toggles ------------ */}
+      {mobilePanel && (
+        <div
+          className="fixed inset-0 z-20 bg-black/30 md:hidden"
+          onClick={() => setMobilePanel(null)}
+          aria-hidden
+        />
+      )}
+      <div
+        className="pointer-events-none fixed inset-x-0 z-10 flex justify-center gap-2 md:hidden"
+        style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      >
+        {([["controls", "Filters & weights"], ["list", selected ? "Details" : "Top spots"]] as const).map(
+          ([panel, label]) => (
+            <button
+              key={panel}
+              onClick={() => setMobilePanel(panel)}
+              className="pointer-events-auto rounded-full border px-4 py-2 text-xs font-medium shadow-lg backdrop-blur"
+              style={{
+                borderColor: "var(--border)",
+                background: "color-mix(in srgb, var(--surface-1) 94%, transparent)",
+                color: "var(--text-primary)",
+              }}
+            >
+              {label}
+            </button>
+          )
+        )}
+      </div>
     </div>
   );
 }

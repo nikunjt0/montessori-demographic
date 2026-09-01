@@ -95,3 +95,12 @@ body {
 .maplibregl-ctrl-group { background: var(--surface-1) !important; }
 
 input[type="range"] { accent-color: var(--accent); }
+
+/* On phones the toggle-button bar sits along the bottom of the map; lift
+   MapLibre's scale and attribution controls clear of it. */
+@media (max-width: 767px) {
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    bottom: calc(52px + env(safe-area-inset-bottom));
+  }
+}

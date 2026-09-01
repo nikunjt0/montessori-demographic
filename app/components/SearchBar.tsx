@@ -38,7 +38,7 @@ export default function SearchBar({ onLocated }: { onLocated: (r: LocateResult) 
   };
 
   return (
-    <div className="absolute top-4 left-4 z-10 w-80">
+    <div className="absolute top-4 left-4 right-14 z-10 md:right-auto md:w-80">
       <div
         className="flex overflow-hidden rounded-lg border shadow-lg backdrop-blur"
         style={{
@@ -51,7 +51,7 @@ export default function SearchBar({ onLocated }: { onLocated: (r: LocateResult) 
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") search(); }}
           placeholder="Score an address… e.g. 123 Main St, Naperville"
-          className="w-full bg-transparent px-3 py-2 text-xs outline-none"
+          className="w-full bg-transparent px-3 py-2 text-base outline-none md:text-xs"
           style={{ color: "var(--text-primary)" }}
           aria-label="Search an address"
         />

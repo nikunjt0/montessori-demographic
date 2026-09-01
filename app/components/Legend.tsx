@@ -10,7 +10,7 @@ const RAMP = [
 export default function Legend({ meta, showSchools, showHomes }: { meta: Meta; showSchools: boolean; showHomes: boolean }) {
   return (
     <div
-      className="absolute bottom-6 left-6 z-10 rounded-lg border p-3 text-xs shadow-lg backdrop-blur"
+      className="absolute bottom-6 left-6 z-10 hidden rounded-lg border p-3 text-xs shadow-lg backdrop-blur md:block"
       style={{
         background: "color-mix(in srgb, var(--surface-1) 92%, transparent)",
         borderColor: "var(--border)",
