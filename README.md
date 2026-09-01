@@ -159,3 +159,4 @@ specific block group — drive the top candidates and check what is actually the
   standard. A 95 means "top 5% of the suburbs," not "guaranteed viable."
 - This models demand and competition only — not zoning, commercial rents,
   build-out cost, or DCFS licensing feasibility for a specific parcel.
+# montessori-demographic
